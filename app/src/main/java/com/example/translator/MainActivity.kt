@@ -145,8 +145,17 @@ fun TranslatorScreen(
                     Text(text = "设置")
                 }
             }
+            if (settingsUiState.requiresApiKeySetup ||
+                (settingsUiState.hasBundledApiKey && settingsUiState.apiKey.isBlank())
+            ) {
+                ApiSetupCard(
+                    hasBundledApiKey = settingsUiState.hasBundledApiKey,
+                    onSettingsClick = onSettingsClick
+                )
+            }
             TranslationActions(
                 isTranslating = uiState.isTranslating,
+                isConfigReady = !settingsUiState.requiresApiKeySetup,
                 onTranslate = onTranslate,
                 onClearAll = onClearAll
             )
@@ -303,6 +312,47 @@ private fun ErrorMessageCard(
 }
 
 @Composable
+private fun ApiSetupCard(
+    hasBundledApiKey: Boolean,
+    onSettingsClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = "先完成 API 配置",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+            Text(
+                text = if (hasBundledApiKey) {
+                    "当前仍可使用打包内默认配置，也可以在设置里保存你自己的 API Key。"
+                } else {
+                    "首次使用需要在应用内保存 DeepSeek API Key。保存一次后，这台设备后续直接打开即可使用。"
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+            Button(
+                onClick = onSettingsClick,
+                modifier = Modifier.align(Alignment.End)
+            ) {
+                Text(text = "去设置")
+            }
+        }
+    }
+}
+
+@Composable
 private fun ConversationInsightCard(
     insight: String,
     isSummarizing: Boolean,
@@ -428,24 +478,31 @@ private fun SettingsDialog(
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(text = "取消")
+                Text(text = if (state.requiresApiKeySetup) "稍后" else "取消")
             }
         },
-        title = { Text(text = "设置") },
+        title = { Text(text = if (state.requiresApiKeySetup) "首次配置" else "设置") },
         text = {
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
-                    text = "公共仓库默认不内置密钥。留空时读取本机构建配置，也可以在这里临时覆盖。",
+                    text = when {
+                        state.requiresApiKeySetup ->
+                            "请先填写 DeepSeek API Key。配置会保存在当前设备，本机后续直接打开即可使用。"
+                        state.hasBundledApiKey && state.apiKey.isBlank() ->
+                            "当前仍在使用打包默认配置，也可以在这里保存你自己的 API Key。"
+                        else ->
+                            "API Key 会保存在当前设备。Base URL 留空时继续使用默认 DeepSeek 接口。"
+                    },
                     style = MaterialTheme.typography.bodySmall
                 )
                 TextField(
                     value = state.editApiKey,
                     onValueChange = onApiKeyChange,
                     label = { Text("API Key") },
-                    placeholder = { Text("默认：local.properties 或环境变量") },
+                    placeholder = { Text("请输入 DeepSeek API Key") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -457,6 +514,13 @@ private fun SettingsDialog(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
+                state.validationMessage?.let { message ->
+                    Text(
+                        text = message,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
                 Text(
                     text = "碎碎念偏好语言",
                     style = MaterialTheme.typography.bodySmall
@@ -507,6 +571,7 @@ private fun TranslatorPreview() {
 @Composable
 private fun TranslationActions(
     isTranslating: Boolean,
+    isConfigReady: Boolean,
     onTranslate: () -> Unit,
     onClearAll: () -> Unit
 ) {
@@ -518,10 +583,16 @@ private fun TranslationActions(
     ) {
         Button(
             onClick = onTranslate,
-            enabled = !isTranslating,
+            enabled = !isTranslating && isConfigReady,
             modifier = Modifier.weight(1f)
         ) {
-            Text(text = if (isTranslating) "翻译中..." else "开始翻译")
+            Text(
+                text = when {
+                    isTranslating -> "翻译中..."
+                    isConfigReady -> "开始翻译"
+                    else -> "先完成设置"
+                }
+            )
         }
 
         TextButton(
@@ -581,8 +652,17 @@ fun ConversationScreen(
                     }
                 }
             }
+            if (settingsUiState.requiresApiKeySetup ||
+                (settingsUiState.hasBundledApiKey && settingsUiState.apiKey.isBlank())
+            ) {
+                ApiSetupCard(
+                    hasBundledApiKey = settingsUiState.hasBundledApiKey,
+                    onSettingsClick = onSettingsClick
+                )
+            }
             TranslationActions(
                 isTranslating = uiState.isTranslating,
+                isConfigReady = !settingsUiState.requiresApiKeySetup,
                 onTranslate = onTranslate,
                 onClearAll = onClearAll
             )

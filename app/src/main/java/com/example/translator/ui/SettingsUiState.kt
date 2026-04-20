@@ -10,5 +10,9 @@ data class SettingsUiState(
     val editBaseUrl: String = "",
     val editPreferredLanguage: Language = Language.CHINESE,
     val isDialogVisible: Boolean = false,
-    val isSaving: Boolean = false
+    val isSaving: Boolean = false,
+    val requiresApiKeySetup: Boolean = false,
+    val hasBundledApiKey: Boolean = false,
+    val hasShownInitialSetup: Boolean = false,
+    val validationMessage: String? = null
 )
