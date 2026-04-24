@@ -29,6 +29,16 @@ val deepSeekBaseUrl = projectSecret(
     "https://api.deepseek.com/chat/completions"
 )
 val deepSeekModel = projectSecret("deepseek.model", "DEEPSEEK_MODEL", "deepseek-chat")
+val releaseStoreFile = projectSecret("release.storeFile", "RELEASE_STORE_FILE")
+val releaseStorePassword = projectSecret("release.storePassword", "RELEASE_STORE_PASSWORD")
+val releaseKeyAlias = projectSecret("release.keyAlias", "RELEASE_KEY_ALIAS")
+val releaseKeyPassword = projectSecret("release.keyPassword", "RELEASE_KEY_PASSWORD")
+val hasReleaseSigning = listOf(
+    releaseStoreFile,
+    releaseStorePassword,
+    releaseKeyAlias,
+    releaseKeyPassword
+).all { it.isNotBlank() }
 
 android {
     namespace = "com.example.translator"
@@ -38,8 +48,8 @@ android {
         applicationId = "com.example.translator"
         minSdk = 26
         targetSdk = 34
-        versionCode = 2
-        versionName = "1.1.0"
+        versionCode = 3
+        versionName = "1.1.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "DEEPSEEK_API_KEY", buildConfigString(deepSeekApiKey))
@@ -47,9 +57,23 @@ android {
         buildConfigField("String", "DEEPSEEK_MODEL", buildConfigString(deepSeekModel))
     }
 
+    signingConfigs {
+        create("release") {
+            if (hasReleaseSigning) {
+                storeFile = file(releaseStoreFile)
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            } else {
+                initWith(getByName("debug"))
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
