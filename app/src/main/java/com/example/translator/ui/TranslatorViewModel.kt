@@ -53,14 +53,17 @@ class TranslatorViewModel(
                     state.copy(
                         apiKey = settings.apiKey,
                         baseUrl = settings.baseUrl,
+                        model = settings.model,
                         preferredLanguage = settings.preferredSummaryLanguage,
                         editApiKey = if (state.isDialogVisible) state.editApiKey else settings.apiKey,
                         editBaseUrl = if (state.isDialogVisible) state.editBaseUrl else settings.baseUrl,
+                        editModel = if (state.isDialogVisible) state.editModel else settings.model,
                         editPreferredLanguage = if (state.isDialogVisible) state.editPreferredLanguage else settings.preferredSummaryLanguage,
                         requiresApiKeySetup = requiresApiKeySetup,
                         hasBundledApiKey = hasBundledApiKey,
                         isDialogVisible = state.isDialogVisible || shouldPromptInitialSetup,
-                        hasShownInitialSetup = state.hasShownInitialSetup || shouldPromptInitialSetup
+                        hasShownInitialSetup = state.hasShownInitialSetup || shouldPromptInitialSetup,
+                        defaultModel = BuildConfig.DEEPSEEK_MODEL
                     )
                 }
             }
@@ -156,6 +159,7 @@ class TranslatorViewModel(
                 isDialogVisible = true,
                 editApiKey = state.apiKey,
                 editBaseUrl = state.baseUrl,
+                editModel = state.model,
                 editPreferredLanguage = state.preferredLanguage,
                 hasShownInitialSetup = true,
                 validationMessage = null
@@ -181,6 +185,10 @@ class TranslatorViewModel(
         _settingsUiState.update { it.copy(editBaseUrl = value, validationMessage = null) }
     }
 
+    fun onSettingsModelChange(value: String) {
+        _settingsUiState.update { it.copy(editModel = value, validationMessage = null) }
+    }
+
     fun onSettingsPreferredLanguageChange(language: Language) {
         _settingsUiState.update { it.copy(editPreferredLanguage = language) }
     }
@@ -202,6 +210,7 @@ class TranslatorViewModel(
                 settingsRepository.updateSettings(
                     apiKey = apiKey,
                     baseUrl = drafts.editBaseUrl.trim(),
+                    model = drafts.editModel.trim(),
                     summaryLanguage = drafts.editPreferredLanguage
                 )
                 _settingsUiState.update {
@@ -301,16 +310,20 @@ class TranslatorViewModel(
         val settings = _settingsUiState.value
         val apiKey = settings.apiKey.ifBlank { BuildConfig.DEEPSEEK_API_KEY }
         val baseUrl = settings.baseUrl.ifBlank { BuildConfig.DEEPSEEK_BASE_URL }
+        val model = settings.model.ifBlank { BuildConfig.DEEPSEEK_MODEL }
         check(apiKey.isNotBlank()) {
             "请先在设置中填写 DeepSeek API Key。保存后会保存在当前设备，本机后续打开即可直接使用。"
         }
         check(baseUrl.isNotBlank()) {
             "DeepSeek Base URL 未配置。"
         }
+        check(model.isNotBlank()) {
+            "DeepSeek Model 未配置。"
+        }
         return ApiConfig(
             apiKey = apiKey,
             baseUrl = baseUrl,
-            model = BuildConfig.DEEPSEEK_MODEL
+            model = model
         )
     }
 

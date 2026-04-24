@@ -22,16 +22,23 @@ class SettingsRepository(
         AppSettings(
             apiKey = prefs[API_KEY].orEmpty(),
             baseUrl = prefs[BASE_URL].orEmpty(),
+            model = prefs[MODEL].orEmpty(),
             preferredSummaryLanguage = prefs[SUMMARY_LANGUAGE]
                 ?.let { runCatching { Language.valueOf(it) }.getOrNull() }
                 ?: Language.CHINESE
         )
     }
 
-    suspend fun updateSettings(apiKey: String, baseUrl: String, summaryLanguage: Language) {
+    suspend fun updateSettings(
+        apiKey: String,
+        baseUrl: String,
+        model: String,
+        summaryLanguage: Language
+    ) {
         context.settingsDataStore.edit { prefs ->
             prefs[API_KEY] = apiKey
             prefs[BASE_URL] = baseUrl
+            prefs[MODEL] = model
             prefs[SUMMARY_LANGUAGE] = summaryLanguage.name
         }
     }
@@ -39,6 +46,7 @@ class SettingsRepository(
     companion object {
         private val API_KEY = stringPreferencesKey("api_key")
         private val BASE_URL = stringPreferencesKey("base_url")
+        private val MODEL = stringPreferencesKey("model")
         private val SUMMARY_LANGUAGE = stringPreferencesKey("summary_language")
     }
 }

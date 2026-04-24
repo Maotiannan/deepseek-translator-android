@@ -83,6 +83,7 @@ fun TranslatorApp() {
                     onSettingsDismiss = viewModel::dismissSettings,
                     onSettingsApiKeyChange = viewModel::onSettingsApiKeyChange,
                     onSettingsBaseUrlChange = viewModel::onSettingsBaseUrlChange,
+                    onSettingsModelChange = viewModel::onSettingsModelChange,
                     onSettingsPreferredLanguageChange = viewModel::onSettingsPreferredLanguageChange,
                     onSaveSettings = viewModel::saveSettings,
                     onDismissError = viewModel::dismissError
@@ -100,6 +101,7 @@ fun TranslatorApp() {
                     onSettingsDismiss = viewModel::dismissSettings,
                     onSettingsApiKeyChange = viewModel::onSettingsApiKeyChange,
                     onSettingsBaseUrlChange = viewModel::onSettingsBaseUrlChange,
+                    onSettingsModelChange = viewModel::onSettingsModelChange,
                     onSettingsPreferredLanguageChange = viewModel::onSettingsPreferredLanguageChange,
                     onSaveSettings = viewModel::saveSettings
                 )
@@ -121,6 +123,7 @@ fun TranslatorScreen(
     onSettingsDismiss: () -> Unit,
     onSettingsApiKeyChange: (String) -> Unit,
     onSettingsBaseUrlChange: (String) -> Unit,
+    onSettingsModelChange: (String) -> Unit,
     onSettingsPreferredLanguageChange: (Language) -> Unit,
     onSaveSettings: () -> Unit
 ) {
@@ -206,6 +209,7 @@ fun TranslatorScreen(
             onDismiss = onSettingsDismiss,
             onApiKeyChange = onSettingsApiKeyChange,
             onBaseUrlChange = onSettingsBaseUrlChange,
+            onModelChange = onSettingsModelChange,
             onPreferredLanguageChange = onSettingsPreferredLanguageChange,
             onSave = onSaveSettings
         )
@@ -464,6 +468,7 @@ private fun SettingsDialog(
     onDismiss: () -> Unit,
     onApiKeyChange: (String) -> Unit,
     onBaseUrlChange: (String) -> Unit,
+    onModelChange: (String) -> Unit,
     onPreferredLanguageChange: (Language) -> Unit,
     onSave: () -> Unit
 ) {
@@ -484,7 +489,9 @@ private fun SettingsDialog(
         title = { Text(text = if (state.requiresApiKeySetup) "首次配置" else "设置") },
         text = {
             Column(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
@@ -511,6 +518,22 @@ private fun SettingsDialog(
                     onValueChange = onBaseUrlChange,
                     label = { Text("Base URL") },
                     placeholder = { Text("默认：https://api.deepseek.com/chat/completions") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                TextField(
+                    value = state.editModel,
+                    onValueChange = onModelChange,
+                    label = { Text("Model") },
+                    placeholder = {
+                        Text(
+                            text = if (state.defaultModel.isBlank()) {
+                                "留空使用默认模型"
+                            } else {
+                                "留空使用默认模型：${state.defaultModel}"
+                            }
+                        )
+                    },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -563,6 +586,7 @@ private fun TranslatorPreview() {
             onSettingsDismiss = {},
             onSettingsApiKeyChange = {},
             onSettingsBaseUrlChange = {},
+            onSettingsModelChange = {},
             onSettingsPreferredLanguageChange = {},
             onSaveSettings = {}
         )
@@ -619,6 +643,7 @@ fun ConversationScreen(
     onSettingsDismiss: () -> Unit,
     onSettingsApiKeyChange: (String) -> Unit,
     onSettingsBaseUrlChange: (String) -> Unit,
+    onSettingsModelChange: (String) -> Unit,
     onSettingsPreferredLanguageChange: (Language) -> Unit,
     onSaveSettings: () -> Unit,
     onDismissError: () -> Unit
@@ -712,6 +737,7 @@ fun ConversationScreen(
             onDismiss = onSettingsDismiss,
             onApiKeyChange = onSettingsApiKeyChange,
             onBaseUrlChange = onSettingsBaseUrlChange,
+            onModelChange = onSettingsModelChange,
             onPreferredLanguageChange = onSettingsPreferredLanguageChange,
             onSave = onSaveSettings
         )
